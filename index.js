@@ -32,33 +32,33 @@ app.get("/webhook", (req, res) => {
 });
 
 // Recibir mensajes
-app.post("/webhook", async (req, res) => {
+app.post("/webhook", (req, res) => {
+  // 1) Siempre contestar rápido a Meta
+  res.sendStatus(200);
+
   try {
     const value = req.body?.entry?.[0]?.changes?.[0]?.value;
 
-    console.log("=== WEBHOOK IN ===");
-    console.log(JSON.stringify(req.body, null, 2));
+    const hasMessages = Array.isArray(value?.messages) && value.messages.length > 0;
+    const hasStatuses = Array.isArray(value?.statuses) && value.statuses.length > 0;
 
-    // Siempre responder 200 rápido a Meta
-    res.sendStatus(200);
+    console.log("Webhook: hasMessages=", hasMessages, "hasStatuses=", hasStatuses);
 
-    // Si no hay mensajes, log y salir
-    const msgs = value?.messages;
-    if (!msgs || msgs.length === 0) {
-      console.log("No 'messages' en payload. Puede ser status/evento.");
-      return;
-    }
+    // 2) Si es solo status (sent/read), no respondemos por WhatsApp
+    if (!hasMessages) return;
 
-    const msg = msgs[0];
+    const msg = value.messages[0];
     const from = msg.from;
-    const text = msg.text?.body || `(tipo=${msg.type})`;
 
-    await sendMessage(from, "ACK webhook ✅");
-    await sendMessage(from, "Recibido: " + text);
+    // Puede venir text u otros tipos
+    const text = msg.text?.body ?? `(tipo=${msg.type})`;
+
+    // 3) Enviar respuesta (no await para no trabar)
+    sendMessage(from, "Recibido: " + text).catch((err) => {
+      console.error("Error enviando respuesta:", err?.response?.data || err);
+    });
   } catch (err) {
-    console.error("ERROR WEBHOOK:", err?.response?.data || err);
-    // igual devolver 200 si no lo devolvimos aún
-    try { res.sendStatus(200); } catch {}
+    console.error("Error procesando webhook:", err);
   }
 });
 
@@ -92,5 +92,5 @@ process.on("uncaughtException", (e) => console.error("uncaughtException:", e));
 
 const PORT = process.env.PORT || 3000;
 // bind explícito a 0.0.0.0 (Railway/containers lo agradecen)
-sendMessage("54111564512799", "BOT REINICIADO");
+//sendMessage("54111564512799", "BOT REINICIADO");
 app.listen(PORT, "0.0.0.0", () => console.log("Bot activo en puerto", PORT));
