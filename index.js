@@ -49,7 +49,8 @@ app.post("/webhook", (req, res) => {
 
     const msg = value.messages[0];
     //const from = msg.from;
-    const to = "54111564512799"; // tu test recipient que ya funciona
+    //const to = "54111564512799"; // tu test recipient que ya funciona
+    const to = process.env.ALLOWED_TO || msg.from;
 
     // Puede venir text u otros tipos
     const text = msg.text?.body ?? `(tipo=${msg.type})`;
