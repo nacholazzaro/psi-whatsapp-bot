@@ -79,4 +79,5 @@ process.on("uncaughtException", (e) => console.error("uncaughtException:", e));
 
 const PORT = process.env.PORT || 3000;
 // bind explícito a 0.0.0.0 (Railway/containers lo agradecen)
+sendMessage("54111564512799", "BOT REINICIADO");
 app.listen(PORT, "0.0.0.0", () => console.log("Bot activo en puerto", PORT));
