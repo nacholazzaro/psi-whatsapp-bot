@@ -123,45 +123,43 @@ async function handleTextCommand(text) {
 
   // AGENDAR|Julia|2026-02-25|16:00|PARTICULAR
   if (cmd === "AGENDAR") {
-    const paciente = parts[1];
-    const fecha = parts[2];
-    const hora = parts[3];
-    const tipo = (parts[4] || "PARTICULAR").toUpperCase();
+  const paciente = parts[1];
+  const fecha = parts[2];
+  const hora = parts[3];
+  const tipo = (parts[4] || "PARTICULAR").toUpperCase();
 
-    if (!paciente || !fecha || !hora) {
-      return "Formato: AGENDAR|Nombre|YYYY-MM-DD|HH:MM|PARTICULAR/OS";
-    }
-
-    const pago = "PENDIENTE";
-    const estado = "ACTIVO";
-    const id = uuidv4();
-    const createdAt = new Date().toISOString();
-
-    // const calendarEventId = await createCalendarEvent({
-    //   paciente,
-    //   fecha,
-    //   hora,
-    //   tipo,
-    //   pago,
-    // });
-
-    const { id: calendarEventId, link } = await createCalendarEvent({ paciente, fecha, hora, tipo, pago });
-
-    await appendTurno([
-      id,
-      paciente,
-      fecha,
-      hora,
-      tipo,
-      pago,
-      estado,
-      calendarEventId,
-      "",
-      createdAt,
-    ]);
-
-    return `✅ Agendado\n${paciente}\n${fecha} ${hora}\nTipo: ${tipo}\nLink: ${calendarLink}`;
+  if (!paciente || !fecha || !hora) {
+    return "Formato: AGENDAR|Nombre|YYYY-MM-DD|HH:MM|PARTICULAR/OS";
   }
+
+  const pago = "PENDIENTE";
+  const estado = "ACTIVO";
+  const id = uuidv4();
+  const createdAt = new Date().toISOString();
+
+  const { id: calendarEventId, link } = await createCalendarEvent({
+    paciente,
+    fecha,
+    hora,
+    tipo,
+    pago,
+  });
+
+  await appendTurno([
+    id,
+    paciente,
+    fecha,
+    hora,
+    tipo,
+    pago,
+    estado,
+    calendarEventId,
+    "",
+    createdAt,
+  ]);
+
+  return `✅ Agendado\n${paciente}\n${fecha} ${hora}\nTipo: ${tipo}\n📅 ${link}`;
+}
 
   return (
     "Comandos disponibles:\n" +
