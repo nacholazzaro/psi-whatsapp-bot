@@ -109,7 +109,9 @@ async function createCalendarEvent({ paciente, fecha, hora, tipo, pago }) {
     },
   });
 
-  return ev.data.id;
+  console.log("Evento creado:", ev.data.id, ev.data.htmlLink);
+
+  return { id: ev.data.id, link: ev.data.htmlLink };
 }
 
 /***********************
@@ -135,13 +137,15 @@ async function handleTextCommand(text) {
     const id = uuidv4();
     const createdAt = new Date().toISOString();
 
-    const calendarEventId = await createCalendarEvent({
-      paciente,
-      fecha,
-      hora,
-      tipo,
-      pago,
-    });
+    // const calendarEventId = await createCalendarEvent({
+    //   paciente,
+    //   fecha,
+    //   hora,
+    //   tipo,
+    //   pago,
+    // });
+
+    const { id: calendarEventId, link } = await createCalendarEvent({ paciente, fecha, hora, tipo, pago });
 
     await appendTurno([
       id,
@@ -156,7 +160,7 @@ async function handleTextCommand(text) {
       createdAt,
     ]);
 
-    return `✅ Agendado\n${paciente}\n${fecha} ${hora}\nTipo: ${tipo}`;
+    return `✅ Agendado\n${paciente}\n${fecha} ${hora}\nTipo: ${tipo}\nLink: ${calendarLink}`;
   }
 
   return (
