@@ -48,13 +48,14 @@ app.post("/webhook", (req, res) => {
     if (!hasMessages) return;
 
     const msg = value.messages[0];
-    const from = msg.from;
+    //const from = msg.from;
+    const to = "54111564512799"; // tu test recipient que ya funciona
 
     // Puede venir text u otros tipos
     const text = msg.text?.body ?? `(tipo=${msg.type})`;
 
     // 3) Enviar respuesta (no await para no trabar)
-    sendMessage(from, "Recibido: " + text).catch((err) => {
+    sendMessage(to, "Recibido: " + text).catch((err) => {
       console.error("Error enviando respuesta:", err?.response?.data || err);
     });
   } catch (err) {
