@@ -83,18 +83,29 @@ async function appendTurno(row) {
 }
 
 async function createCalendarEvent({ paciente, fecha, hora, tipo, pago }) {
+  // fecha: YYYY-MM-DD, hora: HH:MM (hora local Argentina)
   const start = `${fecha}T${hora}:00`;
-  const endDate = new Date(`${fecha}T${hora}:00`);
-  endDate.setMinutes(endDate.getMinutes() + 50);
-  const end = endDate.toISOString().slice(0, 19);
+
+  // Armamos el fin +50 min SIN convertir a UTC (evitamos problemas)
+  const [h, m] = hora.split(":").map(Number);
+  const endMinutesTotal = h * 60 + m + 50;
+  const endH = String(Math.floor(endMinutesTotal / 60)).padStart(2, "0");
+  const endM = String(endMinutesTotal % 60).padStart(2, "0");
+  const end = `${fecha}T${endH}:${endM}:00`;
 
   const ev = await calendar.events.insert({
     calendarId: CALENDAR_ID,
     requestBody: {
       summary: `${paciente} – Psicoterapia`,
       description: `Tipo: ${tipo}\nPago: ${pago}`,
-      start: { dateTime: start },
-      end: { dateTime: end },
+      start: {
+        dateTime: start,
+        timeZone: "America/Argentina/Buenos_Aires",
+      },
+      end: {
+        dateTime: end,
+        timeZone: "America/Argentina/Buenos_Aires",
+      },
     },
   });
 
