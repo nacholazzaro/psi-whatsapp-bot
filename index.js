@@ -9,6 +9,9 @@ const VERIFY_TOKEN = "psi_token_123";
 const TOKEN = process.env.WHATSAPP_TOKEN;
 const PHONE_ID = process.env.PHONE_ID;
 
+//ruta de prueba:
+app.get("/", (req, res) => res.send("OK"));
+
 // Webhook verificación
 app.get("/webhook", (req, res) => {
   const mode = req.query["hub.mode"];
@@ -53,6 +56,5 @@ async function sendMessage(to, text) {
   );
 }
 
-app.listen(3000, () => {
-  console.log("Bot activo");
-});
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log("Bot activo en puerto", PORT));
