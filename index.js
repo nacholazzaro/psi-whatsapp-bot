@@ -33,19 +33,33 @@ app.get("/webhook", (req, res) => {
 
 // Recibir mensajes
 app.post("/webhook", async (req, res) => {
-  try {
-    const msg = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+  console.log("WEBHOOK BODY:", JSON.stringify(req.body, null, 2));
 
-    if (msg) {
+  try {
+    const entry = req.body.entry?.[0];
+    const changes = entry?.changes?.[0];
+    const value = changes?.value;
+    const messages = value?.messages;
+
+    if (messages && messages.length > 0) {
+      const msg = messages[0];
       const from = msg.from;
-      const text = msg.text?.body || "";
+
+      let text = "";
+
+      if (msg.type === "text") {
+        text = msg.text.body;
+      } else {
+        text = "[mensaje no-texto]";
+      }
+
       await sendMessage(from, "Recibido: " + text);
     }
 
-    return res.sendStatus(200);
+    res.sendStatus(200);
   } catch (err) {
-    console.error("ERROR en /webhook:", err?.response?.data || err);
-    return res.sendStatus(200); // igual devolvemos 200 a Meta
+    console.error("ERROR WEBHOOK:", err);
+    res.sendStatus(200);
   }
 });
 
