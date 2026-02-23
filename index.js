@@ -90,10 +90,9 @@ const calendar = google.calendar({ version: "v3", auth });
  * WHATSAPP SEND
  ***********************/
 async function sendMessage(to, text) {
-  if (!to) return;
-
+  console.log("[SEND] to:", to);
   try {
-    await axios.post(
+    const r = await axios.post(
       `https://graph.facebook.com/v22.0/${PHONE_ID}/messages`,
       {
         messaging_product: "whatsapp",
@@ -108,8 +107,9 @@ async function sendMessage(to, text) {
         timeout: 15000,
       }
     );
+    console.log("[SEND] ok status:", r.status);
   } catch (err) {
-    console.error("Error enviando WhatsApp:", err?.response?.data || err);
+    console.error("[SEND] error:", err?.response?.status, err?.response?.data || err.message || err);
   }
 }
 
@@ -1047,55 +1047,23 @@ app.get("/", (req, res) => {
 /***********************
  * WEBHOOK RECEIVE
  ***********************/
-app.post("/webhook", (req, res) => {
-  // WhatsApp requiere 200 rápido
+app.post("/webhook", async (req, res) => {
   res.sendStatus(200);
 
-  try {
-    const value = req.body?.entry?.[0]?.changes?.[0]?.value;
-    const msg = value?.messages?.[0];
-    if (!msg) return;
+  const value = req.body?.entry?.[0]?.changes?.[0]?.value;
+  const msg = value?.messages?.[0];
+  if (!msg) return;
 
-    const from = msg.from; // número que envía
-    const text = msg.text?.body || "";
+  const from = msg.from;
+  const text = msg.text?.body || "";
 
-    console.log("FROM:", from, "TEXTO:", text);
+  console.log("FROM:", from, "TEXTO:", text);
 
-    // Seguridad opcional: whitelist de remitentes
-    if (ALLOWED_FROM.length && !ALLOWED_FROM.includes(from)) {
-      console.log("FROM no autorizado:", from);
-      return;
-    }
+  const reply = await handleCommand(text);
+  const to = ALLOWED_TO || from;
 
-    (async () => {
-      try {
-        const reply = await handleCommand(text);
-
-        // Modo test: si ALLOWED_TO está seteado, responde a ese número
-        const to = ALLOWED_TO || from;
-
-        // Respuesta humana si algo explotó por env
-        if (!WHATSAPP_TOKEN || !PHONE_ID || !SHEET_ID || !process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
-          await sendMessage(
-            to,
-            "Estoy levantado, pero me faltan variables de entorno para operar (tokens/IDs). Revisá los ENV del container."
-          );
-          return;
-        }
-
-        await sendMessage(to, reply);
-      } catch (e) {
-        console.error("ERROR CMD:", e?.response?.data || e);
-        const to = ALLOWED_TO || from;
-        await sendMessage(
-          to,
-          "Ups… se me rompió algo procesando eso 😅\nProbá de nuevo o mandame AYUDA."
-        );
-      }
-    })();
-  } catch (e) {
-    console.error("ERROR WEBHOOK:", e?.response?.data || e);
-  }
+  console.log("[REPLY] to:", to, "from:", from);
+  await sendMessage(to, reply);
 });
 
 /***********************
