@@ -33,33 +33,32 @@ app.get("/webhook", (req, res) => {
 
 // Recibir mensajes
 app.post("/webhook", async (req, res) => {
-  console.log("WEBHOOK BODY:", JSON.stringify(req.body, null, 2));
-
   try {
-    const entry = req.body.entry?.[0];
-    const changes = entry?.changes?.[0];
-    const value = changes?.value;
-    const messages = value?.messages;
+    const value = req.body?.entry?.[0]?.changes?.[0]?.value;
 
-    if (messages && messages.length > 0) {
-      const msg = messages[0];
-      const from = msg.from;
+    console.log("=== WEBHOOK IN ===");
+    console.log(JSON.stringify(req.body, null, 2));
 
-      let text = "";
+    // Siempre responder 200 rápido a Meta
+    res.sendStatus(200);
 
-      if (msg.type === "text") {
-        text = msg.text.body;
-      } else {
-        text = "[mensaje no-texto]";
-      }
-
-      await sendMessage(from, "Recibido: " + text);
+    // Si no hay mensajes, log y salir
+    const msgs = value?.messages;
+    if (!msgs || msgs.length === 0) {
+      console.log("No 'messages' en payload. Puede ser status/evento.");
+      return;
     }
 
-    res.sendStatus(200);
+    const msg = msgs[0];
+    const from = msg.from;
+    const text = msg.text?.body || `(tipo=${msg.type})`;
+
+    await sendMessage(from, "ACK webhook ✅");
+    await sendMessage(from, "Recibido: " + text);
   } catch (err) {
-    console.error("ERROR WEBHOOK:", err);
-    res.sendStatus(200);
+    console.error("ERROR WEBHOOK:", err?.response?.data || err);
+    // igual devolver 200 si no lo devolvimos aún
+    try { res.sendStatus(200); } catch {}
   }
 });
 
